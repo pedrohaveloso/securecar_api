@@ -4,4 +4,4 @@ analyzer:
     - build/**
 linter:
   rules:
-    file_names: false
+    file_names: true
