@@ -1,9 +1,8 @@
-import 'dart:io';
-
-import 'package:dart_frog/dart_frog.dart';
 import 'package:securecar_api/database/database.dart';
 
 class UserDatabase extends Database {
+  /// Através do id do usuário `userId`, salva um token de acesso a API. O token
+  /// `userToken` deve ser uma chave chave aleatória.
   Future<void> createUserToken({
     required int userId,
     required String userToken,
@@ -24,71 +23,56 @@ class UserDatabase extends Database {
     await conn.close();
   }
 
-  Future<bool> searchUserByEmail({required String email}) async {
-    final conn = await connect();
-
-    final results = await conn.query(
-      'SELECT '
-      '`${usersTable.columns.email}` '
-      'FROM '
-      '`${usersTable.tableName}` '
-      'WHERE '
-      '`${usersTable.columns.email}` = ?;',
-      [email],
-    );
-
-    await conn.close();
-
-    if (results.isEmpty) {
-      return false;
-    }
-
-    return true;
-  }
-
-  Future<Response> authUser({
+  Future<
+      ({
+        int userId,
+        String fullName,
+        bool isValidated,
+        String? validationCode,
+      })?> searchUserByEmailAndPass({
     required String email,
     required String password,
   }) async {
     final conn = await connect();
 
     final results = await conn.query(
-      'SELECT `$usersTable`.`id`, '
-      '`full_name`, '
-      '`is_validated`, '
-      '`validation_code` '
-      'FROM `$usersTable`, `$usersValidationTable` '
-      'WHERE `email` = ? AND `password` = ? '
-      'AND `$usersTable`.`id` = `$usersValidationTable`.`user_id`;',
+      'SELECT '
+      '`${usersValidationTable.columns.userId}`, '
+      '`${usersTable.columns.email}`, '
+      '`${usersValidationTable.columns.isValidated}`, '
+      '`${usersValidationTable.columns.validationCode}` '
+      'FROM '
+      '`${usersTable.tableName}`, '
+      '`${usersValidationTable.tableName}` '
+      'WHERE '
+      '`${usersTable.columns.email}` = ? '
+      'AND '
+      '`${usersTable.columns.password}` = ? '
+      'AND '
+      '`${usersTable.tableName}`.`${usersTable.columns.id}` '
+      '= '
+      '`${usersValidationTable.tableName}`.'
+      '`${usersValidationTable.columns.userId}`;',
       [email, password],
     );
 
-    if (results.isEmpty) {
-      await conn.close();
-      return Response(
-        body: 'Invalid email or password',
-        statusCode: HttpStatus.unprocessableEntity,
-      );
-    }
-
-    final token = await _createUserToken(userId: results.first['id'] as int);
-
     await conn.close();
-    return UserModel().login(results: results, token: token);
 
-    Future<Response> login({
-      required Results results,
-      required String token,
-    }) async {
-      return Response.json(
-        body: {
-          'token': token,
-          'full_name': results.first['full_name'],
-          'is_validated': results.first['is_validated'],
-          if (results.first['is_validated'] == 0)
-            'validation_code': results.first['validation_code'],
-        },
-      );
+    if (results.isEmpty) {
+      return null;
     }
+
+    final isValidated =
+        results.first[usersValidationTable.columns.isValidated] == 0;
+
+    return (
+      userId: results.first[usersValidationTable.columns.userId] as int,
+      fullName: results.first[usersTable.columns.fullName] as String,
+      isValidated: isValidated,
+      validationCode: isValidated
+          ? null
+          : results.first[usersValidationTable.columns.validationCode]
+              as String,
+    );
   }
 }
