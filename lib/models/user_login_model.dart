@@ -19,7 +19,7 @@ class UserLoginSuccessfulResponseModel {
   final String token;
   final String fullName;
   final bool isValidated;
-  final int validationCode;
+  final String validationCode;
 
   Map<String, dynamic> toMap() {
     return {
