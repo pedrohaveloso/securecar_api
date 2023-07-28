@@ -1,5 +1,6 @@
 part of 'user_controller.dart';
 
+/// Valida os dados da requisição de login de usuário.
 ({
   bool isError,
   UserLoginFailedResponseModel? failedResponse,
