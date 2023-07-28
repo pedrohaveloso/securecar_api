@@ -1,14 +1,18 @@
 import 'dart:io';
-
-import 'package:bcrypt/bcrypt.dart';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:securecar_api/database/user_database.dart';
 import 'package:securecar_api/models/user_login_model.dart';
+import 'package:securecar_api/utils/encrypt.dart';
 import 'package:securecar_api/utils/generate_aleatory_string.dart';
 
+/// Serviços e processos de usuário. Após o filtro da requisição, as informações
+/// devem ser passadas para esse serviço.
 class UserService {
   final _userDatabase = UserDatabase();
 
+  /// Serviço de login de usuário, recebe um [UserLoginRequestModel] `user`,
+  /// retornando uma resposta com um erro, caso o login não seja realizado, ou
+  /// uma com informações do usuário e um Token da API, caso seja realizado.
   Future<Response> login({required UserLoginRequestModel user}) async {
     final userExists = await _userDatabase.searchUserByEmailAndPass(
       email: user.email,
@@ -22,14 +26,15 @@ class UserService {
       );
     }
 
-    final token = BCrypt.hashpw(
-      generateAleatoryString(length: 60),
-      BCrypt.gensalt(),
+    final token = generateAleatoryString(length: 60);
+
+    final tokenHashed = Encrypt.hashBCrypt(
+      text: token,
     );
 
     await _userDatabase.createUserToken(
       userId: userExists.userId,
-      userToken: token,
+      userToken: tokenHashed,
     );
 
     final response = UserLoginSuccessfulResponseModel(
