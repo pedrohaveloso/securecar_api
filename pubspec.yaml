@@ -1,6 +1,6 @@
 name: securecar_api
-description: An new Dart Frog application
-version: 1.0.0+1
+description: API do sistema SecureCar.
+version: 0.1.0
 publish_to: none
 
 environment:

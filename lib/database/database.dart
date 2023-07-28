@@ -20,7 +20,7 @@ abstract class Database {
 
   /// Tabela de usuários.
   final usersTable = (
-    tableName: 'usersTable',
+    tableName: 'users',
     columns: (
       id: 'id',
       fullName: 'full_name',
