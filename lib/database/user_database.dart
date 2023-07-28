@@ -1,5 +1,7 @@
 import 'package:securecar_api/database/database.dart';
 
+/// Realiza a comunicação com o banco de dados. Métodos para comunicação
+/// relacionados ao usuário.
 class UserDatabase extends Database {
   /// Através do id do usuário `userId`, salva um token de acesso a API. O token
   /// `userToken` deve ser uma chave chave aleatória.
@@ -23,6 +25,8 @@ class UserDatabase extends Database {
     await conn.close();
   }
 
+  /// Procura um usuário no banco, caso encontre retorna suas informações, caso
+  /// não encontre retorna nulo.
   Future<
       ({
         int userId,
