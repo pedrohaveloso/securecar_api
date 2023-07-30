@@ -16,7 +16,7 @@ class UserDatabase extends Database {
       '`${usersTokenTable.tableName}` '
       '('
       '`${usersTokenTable.columns.token}`, '
-      '`${usersTokenTable.columns.id}`'
+      '`${usersTokenTable.columns.userId}`'
       ') '
       'VALUES (?, ?);',
       [userToken, userId],
@@ -42,7 +42,7 @@ class UserDatabase extends Database {
     final results = await conn.query(
       'SELECT '
       '`${usersValidationTable.columns.userId}`, '
-      '`${usersTable.columns.email}`, '
+      '`${usersTable.columns.fullName}`, '
       '`${usersValidationTable.columns.isValidated}`, '
       '`${usersValidationTable.columns.validationCode}` '
       'FROM '
@@ -67,16 +67,59 @@ class UserDatabase extends Database {
     }
 
     final isValidated =
-        results.first[usersValidationTable.columns.isValidated] == 0;
+        results.first[usersValidationTable.columns.isValidated] != 0;
 
     return (
       userId: results.first[usersValidationTable.columns.userId] as int,
       fullName: results.first[usersTable.columns.fullName] as String,
       isValidated: isValidated,
       validationCode: isValidated
-          ? null
+          ? ''
           : results.first[usersValidationTable.columns.validationCode]
               as String,
     );
+  }
+
+  /// Insere um novo usuário no banco de dados, além do seu código de validação.
+  ///
+  /// A data de nascimento [birth] deve estar no formato `yyyy-mm-dd`.
+  Future<void> insertUser({
+    required String fullName,
+    required String email,
+    required String birth,
+    required String cpf,
+    required String password,
+    required String validationCode,
+  }) async {
+    final conn = await connect();
+
+    await conn.query(
+      'INSERT INTO `${usersTable.tableName}` '
+      '(`${usersTable.columns.fullName}`, '
+      '`${usersTable.columns.email}`, '
+      '`${usersTable.columns.birth}`, '
+      '`${usersTable.columns.cpf}`, '
+      '`${usersTable.columns.password}`'
+      ') VALUES '
+      '(?, ?, ?, ?, ?);',
+      [fullName, email, birth, cpf, password],
+    );
+
+    await conn.query(
+      'INSERT INTO `${usersValidationTable.tableName}` '
+      '(`${usersValidationTable.columns.validationCode}`, '
+      '`${usersValidationTable.columns.userId}`'
+      ') VALUES '
+      '(?, '
+      '('
+      'SELECT ${usersTable.columns.id} '
+      'FROM ${usersTable.tableName} '
+      'WHERE ${usersTable.columns.email} = ? '
+      ')'
+      ');',
+      [validationCode, email],
+    );
+
+    await conn.close();
   }
 }
