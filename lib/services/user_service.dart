@@ -54,6 +54,15 @@ class UserService {
   /// `user`, retornando uma resposta com um erro, caso o cadastro não seja
   /// realizado, ou uma com um Token da API, caso seja realizado.
   Future<Response> register({required UserRegisterRequestModel user}) async {
+    final userExists = await _userDatabase.searchUserByEmail(email: user.email);
+
+    if (userExists) {
+      return Response(
+        body: 'Email already exists',
+        statusCode: HttpStatus.unprocessableEntity,
+      );
+    }
+
     final userId = await _userDatabase.insertUser(
       fullName: user.fullName,
       email: user.email,

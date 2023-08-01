@@ -80,6 +80,31 @@ class UserDatabase extends Database {
     );
   }
 
+  /// Procura um usuário no banco de dados e retorna se ele existe ou não.
+  Future<bool> searchUserByEmail({
+    required String email,
+  }) async {
+    final conn = await connect();
+
+    final results = await conn.query(
+      'SELECT '
+      '`${usersTable.columns.email}` '
+      'FROM '
+      '`${usersTable.tableName}` '
+      'WHERE '
+      '`${usersTable.columns.email}` = ?;',
+      [email],
+    );
+
+    await conn.close();
+
+    if (results.isEmpty) {
+      return false;
+    }
+
+    return true;
+  }
+
   /// Insere um novo usuário no banco de dados, além do seu código de validação.
   ///
   /// Retorna o ID do usuário cadastrado.
@@ -124,7 +149,7 @@ class UserDatabase extends Database {
 
     final results = await conn.query(
       'SELECT '
-      '`${usersValidationTable.columns.userId}` '
+      '`${usersTable.columns.id}` '
       'FROM '
       '`${usersTable.tableName}` '
       'WHERE '
