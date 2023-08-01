@@ -82,8 +82,10 @@ class UserDatabase extends Database {
 
   /// Insere um novo usuário no banco de dados, além do seu código de validação.
   ///
+  /// Retorna o ID do usuário cadastrado.
+  ///
   /// A data de nascimento [birth] deve estar no formato `yyyy-mm-dd`.
-  Future<void> insertUser({
+  Future<int> insertUser({
     required String fullName,
     required String email,
     required String birth,
@@ -120,6 +122,18 @@ class UserDatabase extends Database {
       [validationCode, email],
     );
 
+    final results = await conn.query(
+      'SELECT '
+      '`${usersValidationTable.columns.userId}` '
+      'FROM '
+      '`${usersTable.tableName}` '
+      'WHERE '
+      '`${usersTable.columns.email}` = ?;',
+      [email],
+    );
+
     await conn.close();
+
+    return results.first[usersTable.columns.id] as int;
   }
 }

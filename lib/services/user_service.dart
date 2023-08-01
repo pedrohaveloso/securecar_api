@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:securecar_api/database/user_database.dart';
 import 'package:securecar_api/models/user_login_model.dart';
+import 'package:securecar_api/models/user_register_model.dart';
 import 'package:securecar_api/utils/encrypt.dart';
 import 'package:securecar_api/utils/generate_aleatory_string.dart';
 
@@ -43,6 +44,37 @@ class UserService {
       isValidated: userExists.isValidated,
       validationCode: userExists.validationCode ?? '',
     );
+
+    return Response.json(
+      body: response.toMap(),
+    );
+  }
+
+  /// Serviço de cadastro de usuário, recebe um [UserRegisterRequestModel]
+  /// `user`, retornando uma resposta com um erro, caso o cadastro não seja
+  /// realizado, ou uma com um Token da API, caso seja realizado.
+  Future<Response> register({required UserRegisterRequestModel user}) async {
+    final userId = await _userDatabase.insertUser(
+      fullName: user.fullName,
+      email: user.email,
+      birth: user.birth,
+      cpf: user.cpf,
+      password: user.password,
+      validationCode: user.validationCode,
+    );
+
+    final token = generateAleatoryString(length: 60);
+
+    final tokenHashed = Encrypt.hashBCrypt(
+      text: token,
+    );
+
+    await _userDatabase.createUserToken(
+      userId: userId,
+      userToken: tokenHashed,
+    );
+
+    final response = UserRegisterSuccessfulResponseModel(token: token);
 
     return Response.json(
       body: response.toMap(),
