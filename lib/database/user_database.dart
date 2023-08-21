@@ -161,4 +161,24 @@ class UserDatabase extends Database {
 
     return results.first[usersTable.columns.id] as int;
   }
+
+  /// Valida a conta de um usuário já existente no banco de dados.
+  Future<void> validateUser({required String email}) async {
+    final conn = await connect();
+
+    await conn.query(
+      'UPDATE `${usersValidationTable.tableName}` '
+      'SET `${usersValidationTable.columns.isValidated}` = 1 '
+      'WHERE `${usersValidationTable.columns.userId}` = '
+      '('
+      'SELECT `${usersTable.columns.id}` '
+      'FROM `${usersTable.tableName}` '
+      'WHERE `${usersTable.columns.email}` = ? '
+      ')'
+      ';',
+      [email],
+    );
+
+    await conn.close();
+  }
 }
